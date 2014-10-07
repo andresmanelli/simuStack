@@ -35,4 +35,8 @@ Notes
 Bugs
 ===============
 
- - The command << #kill `ps -e | grep simuStack | awk '{print $1}'` >> will kill the stack.
+The command:
+          
+          #kill `ps -e | grep simuStack | awk '{print $1}'`
+
+will kill the stack.
