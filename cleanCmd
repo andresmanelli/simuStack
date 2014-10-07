@@ -6,9 +6,9 @@ match($0,pat,n){
 }
 END{
 	if(n[1]){
-		system("awk -v n="n[1]" -f removeNL simuList > simuList_TMP")
+		system("gawk -v n="n[1]" -f removeNL simuList > simuList_TMP")
 	} else {
-		system("awk -v n=0 -f removeNL simuList > simuList_TMP")
+		system("gawk -v n=0 -f removeNL simuList > simuList_TMP")
 	}
 	
 	system("rm simuList && mv simuList_TMP simuList && rm doneSimuList")
