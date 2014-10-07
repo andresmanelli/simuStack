@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ `ps -e | grep simuStack | awk 'NR==1{print $1}'` -eq `cat stackPid | awk 'NR==1{print $1}'` ];
+then
+#	echo "STACK RUNNING"
+	exit 0
+else
+#	echo "STACK NOT RUNNING"
+	exit 1
+fi
