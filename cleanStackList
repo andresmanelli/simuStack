@@ -1,3 +1,3 @@
 #!/bin/bash
 
-awk 'BEGIN{pat="([0-9]+) ([0-9]+)"}match($0,pat,n){print "Cleaning simulation number "n[1]", with timestamp of: "n[2]}END{if(n[1]){system("awk '\''BEGIN{RS=\"#\"}(NR>"n[1]"+1)&&(match($0,\"(.+)\\n$\",cmd)){print \"#\"cmd[1]}'\'' simuList > simuList_TMP")}else{system("awk '\''BEGIN{RS=\"#\"}(NR>1)&&(match($0,\"(.+)\\n$\",cmd)){print \"#\"cmd[1]}'\'' simuList > simuList_TMP")}system("rm simuList && mv simuList_TMP simuList && rm doneSimuList")}' doneSimuList
+awk -f cleanCmd doneSimuList
