@@ -22,6 +22,10 @@ Edit the file _simuList_ and add lines with this pattern:
           SECOND COMMAND
           ETC
           
+Recommended: create a temporary file with the command and then
+          
+          cat cmdTempFile >> path/to/simuList
+          
 Notes
 ===============
 
