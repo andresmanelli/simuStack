@@ -1,3 +1,0 @@
-#cd /media
-ls -la
-#kill `ps -e | grep simuStack | awk '{print $1}'`
