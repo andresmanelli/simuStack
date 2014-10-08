@@ -1,7 +1,7 @@
 simuStack
 =========
 
-Stack of commands to run, which can be updated dynamically.
+Stack of lammps simulatins to run, which can be updated dynamically.
 
 Compiling
 ==========
@@ -18,10 +18,9 @@ Adding commands
 
 Edit the file _simuList_ and add lines with this pattern:
 
-          #FIRST COMMAND
-          SECOND COMMAND
-          ETC
-          
+          #CD PATH/TO/SIMULATION/DIRECTORY
+          mpirun -n 8 lmp_openmpi < input.in > output.out
+                    
 Recommended: create a temporary file with the command and then
           
           cat cmdTempFile >> path/to/simuList

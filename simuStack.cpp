@@ -8,7 +8,9 @@
 #include <unistd.h>
 
 #define STACK_RUNNING 0
-#define STACK_NOT_RUNNING 1
+#define STACK_FILE_CHANGED 1
+#define STACK_FILE_DELETED 2
+#define STACK_NOT_RUNNING 3
 
 using namespace std;
 
@@ -30,6 +32,7 @@ int main(int argc, char** argv){
 	time_t timestamp;
 	int stackID = (int) getpid();
 	string line;
+	char cmd[20] = "";
 
 	static const char pid[] = "stackPid";
 	static const char simus[] = "simuList";
@@ -43,9 +46,14 @@ int main(int argc, char** argv){
 	fstream donelist;
 	fstream logfile;
 	
-	int exitCode = system("./checkPid");
+	cout << "NEW ID = " << stackID << endl;
 	
-	if(WEXITSTATUS(exitCode) == STACK_RUNNING){
+	sprintf(cmd,"./checkPid %d",stackID);
+	int exitCode = system(cmd);
+	
+	if(	(WEXITSTATUS(exitCode) == STACK_RUNNING) 		|| 	\
+		(WEXITSTATUS(exitCode) == STACK_FILE_CHANGED)	||	\
+		(WEXITSTATUS(exitCode) == STACK_FILE_DELETED)	){
 		
 		openStream(pidfile, pid, fstream::in);
 		pidfile >> stackID;
@@ -54,10 +62,11 @@ int main(int argc, char** argv){
 		cout << endl << "Stack already running with pid " << stackID << endl;
 		exit(1);
 	}
-	
-	openStream(pidfile, pid, fstream::in);
+
+	openStream(pidfile, pid, fstream::out);
 	pidfile << stackID << endl;
 	pidfile.close();
+	
 	//TODO: VERIFICAR SI HABIA ALGO INICIADO Y REEMPLAZAR EL INPUT POR EL INPUT RESTART
 	//TODO: REEMPLAZAR EN EL INPUT RESTART EL VALOR DE RESTART MAYOR ENCONTRADO EN LA CARPETA
 	//TODO: NORMALIZAR LOS COMANDOS, i.e: PRIMERO UN CD (PARA UBICARSE)
@@ -69,7 +78,7 @@ int main(int argc, char** argv){
 		
 	timestamp = time(0);	
 	
-	openStream(logfile, log, fstream::app);
+	openStream(logfile, log, fstream::out | fstream::app);
 	logfile << endl;
 	logfile << "#################################################" << endl;
 	logfile << "Lammps Stack Running..." << endl;
@@ -83,19 +92,24 @@ int main(int argc, char** argv){
 				
 				timestamp = time(0);
 				
-				openStream(logfile, log, fstream::app);			
+				openStream(logfile, log, fstream::out | fstream::app);			
 				logfile << "#################################################" << endl;
 				logfile << "COMMAND: " << endl << line << endl;
 				logfile << "Timestamp (ASCII): " << ctime(&timestamp);
 				logfile << "Timestamp: " << timestamp << endl;
 				logfile << "#################################################" << endl;
 				int err = system(line.c_str());
-				//TODO: INDICAR QUE INICIÓ EN STARTEDLIST
+				logfile.close();
+				
+				openStream(startedList, started, fstream::out | fstream::app);
+				startedList << index << " " << timestamp << endl; 
+				startedList.close();
+				
 				logfile << "(Up) Command completed with error code: " << err << endl;
 				logfile << "#################################################" << endl << endl;
 				logfile.close();
 				
-				openStream(donelist, done, fstream::app);
+				openStream(donelist, done, fstream::out | fstream::app);
 				donelist << index++ << " " << timestamp << endl;
 				donelist.close();
 			}
@@ -108,6 +122,6 @@ int main(int argc, char** argv){
 		 */
 		infile.clear();
 	}
-	
+
 	exit(0);
 }
