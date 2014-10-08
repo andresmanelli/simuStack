@@ -96,13 +96,15 @@ int main(int argc, char** argv){
 				logfile << "Timestamp (ASCII): " << ctime(&timestamp);
 				logfile << "Timestamp: " << timestamp << endl;
 				logfile << "#################################################" << endl;
-				int err = system(line.c_str());
 				logfile.close();
 				
 				openStream(startedList, started, fstream::out | fstream::app);
 				startedList << index << " " << timestamp << endl; 
 				startedList.close();
 				
+				int err = system(line.c_str());
+				
+				openStream(logfile, log, fstream::out | fstream::app);											
 				logfile << "(Up) Command completed with error code: " << err << endl;
 				logfile << "#################################################" << endl << endl;
 				logfile.close();
