@@ -46,8 +46,6 @@ int main(int argc, char** argv){
 	fstream donelist;
 	fstream logfile;
 	
-	cout << "NEW ID = " << stackID << endl;
-	
 	sprintf(cmd,"./checkPid %d",stackID);
 	int exitCode = system(cmd);
 	
