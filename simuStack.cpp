@@ -7,10 +7,14 @@
 
 #include <unistd.h>
 
-#define STACK_RUNNING 0
-#define STACK_FILE_CHANGED 1
-#define STACK_FILE_DELETED 2
-#define STACK_NOT_RUNNING 3
+#define STACK_RUNNING 		0
+#define STACK_FILE_CHANGED 	1
+#define STACK_FILE_DELETED 	2
+#define STACK_NOT_RUNNING 	3
+
+#define SIMULIST_OK		0
+#define WRONG_PATH 		1
+#define STOPPED_FOUND 	2
 
 using namespace std;
 
@@ -32,6 +36,7 @@ int main(int argc, char** argv){
 	time_t timestamp;
 	int stackID = (int) getpid();
 	string line;
+	int exitCode;
 	char cmd[20] = "";
 
 	static const char pid[] = "stackPid";
@@ -47,8 +52,7 @@ int main(int argc, char** argv){
 	fstream logfile;
 	
 	sprintf(cmd,"./checkPid %d",stackID);
-	int exitCode = system(cmd);
-	
+	exitCode = system(cmd);
 	if(	(WEXITSTATUS(exitCode) == STACK_RUNNING) 		|| 	\
 		(WEXITSTATUS(exitCode) == STACK_FILE_CHANGED)	||	\
 		(WEXITSTATUS(exitCode) == STACK_FILE_DELETED)	){
@@ -70,6 +74,17 @@ int main(int argc, char** argv){
 	//TODO: NORMALIZAR LOS COMANDOS, i.e: PRIMERO UN CD (PARA UBICARSE)
 	cout << endl << "Cleaning simulation list..." << endl;
 	system("./cleanStackList");
+	
+	cout << endl << "Looking for stopped simulations..." << endl;
+	exitCode=system("./updateRestart");
+	if( WEXITSTATUS(exitCode) == STOPPED_FOUND){
+		cout << "Found stopped simulations, updating simuList file..." << endl;
+	} else if( WEXITSTATUS(exitCode) == WRONG_PATH){
+		cout << "Found wrong path, please check simuList file..." << endl;
+	} else if( WEXITSTATUS(exitCode) == SIMULIST_OK){
+		cout << "Nothing found. OK" << endl;
+	}
+	
 	cout << "Stack ready to run." << endl;
 	
 	openStream(infile, simus, fstream::in);

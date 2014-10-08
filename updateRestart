@@ -1,0 +1,35 @@
+#!/bin/bash
+
+started="$(cat startedSimuList)"
+
+if [ ! $started ];
+then
+#	echo "Nothing found"
+	exit 0;
+fi
+
+path="$(gawk -f getPath simuList)"
+
+if [ ! $path ];
+then
+	
+#	echo "Wrong path, please check the simuList file"
+	exit 1
+fi
+
+list="$(cd "$path" && ls -l tmp.restart.*)"
+step="$(echo "$list" | gawk -f lastStep)"
+
+if [ ! $step ];
+then
+#	echo "Started but no restart.. same as if nothing was found"
+	rm startedSimuList
+	exit 0
+fi
+
+gawk -v step=$step -f cmdUpdateRestart simuList > simuList_TMP
+rm startedSimuList
+rm simuList
+mv simuList_TMP simuList
+
+exit 2

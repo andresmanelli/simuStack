@@ -1,0 +1,8 @@
+BEGIN{
+	pat="(.+)input.in(.+).out"
+}
+(NR==1){print}
+(NR==2)&&(match($0,pat,cmd)){
+	print cmd[1]"tmp.restart."step""cmd[2]".restart.out"
+}
+(NR>2){print}
