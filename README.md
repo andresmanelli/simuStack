@@ -82,3 +82,9 @@ a "#" at than line:
 		
 		#OP_
 		#
+
+When a stopped simulation is found, this program searches for a file called
+_input.restart.in_ that is a template with the common information for all
+simulation fixes. Then it adds to this template the pending operations and
+stores the new file in input.restart.STEP.in WITHOUT modifying the template.
+It is necessary to leave a template file for this program to work.

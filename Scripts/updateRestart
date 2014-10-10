@@ -1,72 +1,72 @@
 #!/bin/bash
 
 started="$(cat startedSimuList)"
-if [ ! $started ];
+if [ ! "$started" ]
 then
-	echo "Nothing found"
+#	echo "Nothing found"
 	exit 0;
 fi
 
-simupath="$(gawk -f getPath simuList)"
-if [ ! $simupath ];
+simupath="$(gawk -f AwkFiles/getPath simuList)"
+if [ ! "$simupath" ] || [ ! -d "$simupath" ]
 then
-	echo "Wrong path, please check the simuList file"
+#	echo "Wrong path, please check the simuList file"
 	exit 1
 fi
 
-echo "PATH: $simupath"
+#echo "PATH: $simupath"
 
 list="$(cd "$simupath" && ls -l tmp.restart.*)"
-lastRestartStep="$(echo "$list" | gawk -f lastStep)"
-if [ ! $lastRestartStep ];
+lastRestartStep="$(echo "$list" | gawk -f AwkFiles/lastStep)"
+if [ ! $lastRestartStep ]
 then
-	echo "Started but no restart.. same as if nothing was found"
+#	echo "Started but no restart.. same as if nothing was found"
 	rm startedSimuList
 	exit 0
 fi
 
-echo "LAST RESTART STEP: ${lastRestartStep}"
+#echo "LAST RESTART STEP: ${lastRestartStep}"
 
 #--	FIND RESTART.INPUT FILE
-input_restart_file="$(cd "$simupath" && ls -l input.restart.in | gawk '{print $NF}')"
-echo "RESTART FILE: $input_restart_file"
+input_restart_file="input.restart.in"
+#echo "RESTART FILE: $input_restart_file"
 #--	VERIFY RESTART FILE
-if [ ! -f ${simupath}/${input_restart_file} ]
+if [ ! -f "${simupath}/${input_restart_file}" ]
 then
-	echo "No input restart template found ! Ereasing the simulation..."
-	exit 4
+#	echo "No input restart template found ! Ereasing the simulation..."
+	exit 3
 fi
 #-- FIND INPUT FILE
-input_file="$(gawk -f getInputFile simuList)"
-echo "INPUT FILE: $input_file"
+input_file="$(gawk -f AwkFiles/getInputFile simuList)"
+#echo "INPUT FILE: $input_file"
 #--	VERIFY INPUT FILE
 if [ ! -f "${simupath}/${input_file}.in" ]
 then
-	echo "No input file found in simuList! Ereasing the simulation..."
-	exit 5
+#	echo "No input file found in simuList! Ereasing the simulation..."
+	exit 4
 fi
 #--	FIND OUTPUT FILE
-output_file="$(gawk -f getOutputFile simuList)"
-echo "OUTPUT FILE: $output_file"
+output_file="$(gawk -f AwkFiles/getOutputFile simuList)"
+#echo "OUTPUT FILE: $output_file"
 #	VERIFY OUTPUT FILE
 if [ ! -f "${simupath}/${output_file}" ]
 then
-	echo "No output file found! Ereasing the simulation..."
-	exit 6
+#	echo "No output file found! Ereasing the simulation..."
+	exit 5
 fi
 
 #	WITH INPUT FILE:
-gawk -v m='all' -f extractOps ${simupath}/${input_file}".in" > ops_tmp
+gawk -v m='all' -f AwkFiles/extractOps ${simupath}/${input_file}".in" > ops_tmp
 #--	FIND N OF OPERATIONS
-ops_N="$(gawk -v m='match_nops' -f extractOps ops_tmp)"
+ops_N="$(gawk -v m='match_nops' -f AwkFiles/extractOps ops_tmp)"
 #--	FIND NUMBER OF GENERAL THERMO LINES
-thindex="$(gawk -v m='match_thindex' -f extractOps ops_tmp)"
+thindex="$(gawk -v m='match_thindex' -f AwkFiles/extractOps ops_tmp)"
 #--	FIND GENERAL THERMO INFO
 gthermo="$(gawk "NR>1&&NR<(2+$thindex){print}" ops_tmp)"
 
-echo "OPS N: $ops_N"
-echo "THINDEX: $thindex"
-echo -e "GLOBAL THERMO:\n$gthermo"
+#echo "OPS N: $ops_N"
+#echo "THINDEX: $thindex"
+#echo -e "GLOBAL THERMO:\n$gthermo"
 
 #--	FIND OPERATIONS 			#OP_X
 #--	FIND RESTART STEP 			#ROP_X
@@ -90,7 +90,7 @@ done
 #	WITH THE TMP.RESTART.STEP INFO:
 #	MATCH THE LAST PARTIAL OPERATION PERFORMED COMPARING WITH RUN STEPS
 laststep="$(cat ${simupath}/${output_file} | awk 'BEGIN{ go=0}go==1&&match($1,"[0-9]+",step){print $1}go==0&&match($1,"Step"){go=1}go==1&&match($1,"Loop"){go=0}' | gawk 'END{print}')"
-echo "LAST SIMU STEP: $laststep"
+#echo "LAST SIMU STEP: $laststep"
 
 tmprun=0
 for (( i = 1; i <= ${ops_N}; i++ ))
@@ -108,8 +108,8 @@ do
 			done
 		fi
 		
-		echo "LAST RUN (WHERE RESTART TOOK PLACE): ${ops[$i]}"
-		echo "LAST RUN STEP (WHERE RESTART TOOK PLACE): ${run[$i]}"
+#		echo "LAST RUN (WHERE RESTART TOOK PLACE): ${ops[$i]}"
+#		echo "LAST RUN STEP (WHERE RESTART TOOK PLACE): ${run[$i]}"
 		break
 	fi
 done
@@ -136,9 +136,10 @@ done
 
 #	WITH SIMULIST FILE:
 #--	FIND THE FIRST SIMULATION AND CHANGE THE INPUT AND OUTPUT
-gawk -v s=${lastRestartStep} -f cmdUpdateRestart simuList > simuList_TMP
+gawk -v s=${lastRestartStep} -f AwkFiles/cmdUpdateRestart simuList > simuList_TMP
 rm startedSimuList
 rm simuList
 mv simuList_TMP simuList
+rm ops_tmp
 
-exit 2
+exit 6

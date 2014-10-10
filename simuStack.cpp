@@ -14,7 +14,10 @@
 
 #define SIMULIST_OK		0
 #define WRONG_PATH 		1
-#define STOPPED_FOUND 	2
+#define NO_TEMPLATE		3
+#define NO_INPUT_FILE	4
+#define NO_OUTPUT_FILE	5
+#define UDPATE_DONE		6
 
 using namespace std;
 
@@ -51,7 +54,7 @@ int main(int argc, char** argv){
 	fstream donelist;
 	fstream logfile;
 	
-	sprintf(cmd,"./checkPid %d",stackID);
+	sprintf(cmd,"./Scripts/checkPid %d",stackID);
 	exitCode = system(cmd);
 	if(	(WEXITSTATUS(exitCode) == STACK_RUNNING) 		|| 	\
 		(WEXITSTATUS(exitCode) == STACK_FILE_CHANGED)	||	\
@@ -73,17 +76,25 @@ int main(int argc, char** argv){
 	//TODO: REEMPLAZAR EN EL INPUT RESTART EL VALOR DE RESTART MAYOR ENCONTRADO EN LA CARPETA
 	//TODO: NORMALIZAR LOS COMANDOS, i.e: PRIMERO UN CD (PARA UBICARSE)
 	cout << endl << "Cleaning simulation list..." << endl;
-	system("./cleanStackList");
-	
+	system("./Scripts/cleanStackList");
+
 	cout << endl << "Looking for stopped simulations..." << endl;
-	exitCode=system("./updateRestart");
-	if( WEXITSTATUS(exitCode) == STOPPED_FOUND){
-		cout << "Found stopped simulations, updating simuList file..." << endl;
-	} else if( WEXITSTATUS(exitCode) == WRONG_PATH){
-		cout << "Found wrong path, please check simuList file..." << endl;
-	} else if( WEXITSTATUS(exitCode) == SIMULIST_OK){
-		cout << "Nothing found. OK" << endl;
-	}
+	exitCode=system("./Scripts/updateRestart");
+	if( WEXITSTATUS(exitCode) == WRONG_PATH ){
+		cout << "Found wrong path. Verify and launch again." << endl;
+		exit(1);
+	} else if( WEXITSTATUS(exitCode) == NO_TEMPLATE ){
+		cout << "No input restart template found! Verify and launch again." << endl;
+		exit(1)
+	} else if( WEXITSTATUS(exitCode) == NO_INPUT_FILE ){
+		cout << "No input file found! Verify and launch again." << endl;
+		exit(1)
+	} else if( WEXITSTATUS(exitCode) == NO_OUTPUT_FILE ){
+		cout << "No output file found! Verify and launch again." << endl;
+	} else if( 	(WEXITSTATUS(exitCode) == SIMULIST_OK)	|| \
+				(WEXITSTATUS(exitCode) == UPDATE_DONE)	){
+		cout << "Update done. OK" << endl;
+	}		
 	
 	cout << "Stack ready to run." << endl;
 	
@@ -120,7 +131,7 @@ int main(int argc, char** argv){
 				int err = system(line.c_str());
 				
 				openStream(logfile, log, fstream::out | fstream::app);											
-				logfile << "(Up) Command completed with error code: " << err << endl;
+				logfile << "(Up) Command completed with error code: " << WEXITSTATUS(err) << endl;
 				logfile << "#################################################" << endl << endl;
 				logfile.close();
 				

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-RUNPID="$(ps -e --sort -pid | grep simuStack | awk -v thisPid="$1" -f notThisPid)"
+RUNPID="$(ps -e --sort -pid | grep simuStack | awk -v thisPid="$1" -f AwkFiles/notThisPid)"
 
 if [ -f stackPid ]
 then
-	FILEPID="$(cat stackPid | awk -f extractPid)"
+	FILEPID="$(cat stackPid | awk -f AwkFiles/extractPid)"
 fi
 
 if [ ! $RUNPID ];
