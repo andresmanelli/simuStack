@@ -1,33 +1,142 @@
 #!/bin/bash
 
 started="$(cat startedSimuList)"
-
 if [ ! $started ];
 then
-#	echo "Nothing found"
+	echo "Nothing found"
 	exit 0;
 fi
 
-path="$(gawk -f getPath simuList)"
-
-if [ ! $path ];
+simupath="$(gawk -f getPath simuList)"
+if [ ! $simupath ];
 then
-	
-#	echo "Wrong path, please check the simuList file"
+	echo "Wrong path, please check the simuList file"
 	exit 1
 fi
 
-list="$(cd "$path" && ls -l tmp.restart.*)"
-step="$(echo "$list" | gawk -f lastStep)"
+echo "PATH: $simupath"
 
-if [ ! $step ];
+list="$(cd "$simupath" && ls -l tmp.restart.*)"
+lastRestartStep="$(echo "$list" | gawk -f lastStep)"
+if [ ! $lastRestartStep ];
 then
-#	echo "Started but no restart.. same as if nothing was found"
+	echo "Started but no restart.. same as if nothing was found"
 	rm startedSimuList
 	exit 0
 fi
 
-gawk -v step=$step -f cmdUpdateRestart simuList > simuList_TMP
+echo "LAST RESTART STEP: ${lastRestartStep}"
+
+#--	FIND RESTART.INPUT FILE
+input_restart_file="$(cd "$simupath" && ls -l input.restart.in | gawk '{print $NF}')"
+echo "RESTART FILE: $input_restart_file"
+#--	VERIFY RESTART FILE
+if [ ! -f ${simupath}/${input_restart_file} ]
+then
+	echo "No input restart template found ! Ereasing the simulation..."
+	exit 4
+fi
+#-- FIND INPUT FILE
+input_file="$(gawk -f getInputFile simuList)"
+echo "INPUT FILE: $input_file"
+#--	VERIFY INPUT FILE
+if [ ! -f "${simupath}/${input_file}.in" ]
+then
+	echo "No input file found in simuList! Ereasing the simulation..."
+	exit 5
+fi
+#--	FIND OUTPUT FILE
+output_file="$(gawk -f getOutputFile simuList)"
+echo "OUTPUT FILE: $output_file"
+#	VERIFY OUTPUT FILE
+if [ ! -f "${simupath}/${output_file}" ]
+then
+	echo "No output file found! Ereasing the simulation..."
+	exit 6
+fi
+
+#	WITH INPUT FILE:
+gawk -v m='all' -f extractOps ${simupath}/${input_file}".in" > ops_tmp
+#--	FIND N OF OPERATIONS
+ops_N="$(gawk -v m='match_nops' -f extractOps ops_tmp)"
+#--	FIND NUMBER OF GENERAL THERMO LINES
+thindex="$(gawk -v m='match_thindex' -f extractOps ops_tmp)"
+#--	FIND GENERAL THERMO INFO
+gthermo="$(gawk "NR>1&&NR<(2+$thindex){print}" ops_tmp)"
+
+echo "OPS N: $ops_N"
+echo "THINDEX: $thindex"
+echo -e "GLOBAL THERMO:\n$gthermo"
+
+#--	FIND OPERATIONS 			#OP_X
+#--	FIND RESTART STEP 			#ROP_X
+#--	FIND DUMP INFO				#DOP_X
+#--	FIND THERMO INFO			#THOP_X
+#--	FIND TIMESTEP INFO			#TSOP_X
+#--	FIND RUN STEPS				#RUNOP_X
+run=()
+for (( i = 1; i <= ${ops_N}; i++ ))
+do
+	ops[$i]="$(gawk "NR==($i-1)*16+4+$thindex{print}" ops_tmp)"
+	dump[$i]="$(gawk "NR==($i-1)*16+6+$thindex{print}" ops_tmp)"
+	res[$i]="$(gawk "NR==($i-1)*16+8+$thindex{print}" ops_tmp)"
+	thermo[$i]="$(gawk "NR==($i-1)*16+10+$thindex{print}" ops_tmp)"
+	tstep[$i]="$(gawk "NR==($i-1)*16+12+$thindex{print}" ops_tmp)"	
+	run[$i]="$(gawk "NR==($i-1)*16+14+$thindex{print}" ops_tmp)"
+	undump[$i]="$(gawk "NR==($i-1)*16+16+$thindex{print}" ops_tmp)"
+	unfix[$i]="$(gawk "NR==($i-1)*16+18+$thindex{print}" ops_tmp)"
+done
+
+#	WITH THE TMP.RESTART.STEP INFO:
+#	MATCH THE LAST PARTIAL OPERATION PERFORMED COMPARING WITH RUN STEPS
+laststep="$(cat ${simupath}/${output_file} | awk 'BEGIN{ go=0}go==1&&match($1,"[0-9]+",step){print $1}go==0&&match($1,"Step"){go=1}go==1&&match($1,"Loop"){go=0}' | gawk 'END{print}')"
+echo "LAST SIMU STEP: $laststep"
+
+tmprun=0
+for (( i = 1; i <= ${ops_N}; i++ ))
+do	
+	tmprun=$(( $tmprun + ${run[$i]} ))
+	if (( $tmprun > ${lastRestartStep} ))
+	then
+		if [ "${ops[$i]}" == "#" ]
+		then
+			j=1
+			while [ "${ops[$i]}" == "#" ]
+			do
+				ops[$i]="${ops[$i-$j]}"
+				j=$(( j + 1 ))
+			done
+		fi
+		
+		echo "LAST RUN (WHERE RESTART TOOK PLACE): ${ops[$i]}"
+		echo "LAST RUN STEP (WHERE RESTART TOOK PLACE): ${run[$i]}"
+		break
+	fi
+done
+
+#	WITH RESTART.INPUT FILE:
+#--	FIND LINE WITH READ_RESTART AND PUT TMP.RESTART.STEP
+cat "${simupath}/${input_restart_file}" > "${simupath}/${input_file}.restart.${lastRestartStep}.in"
+input_restart_file="${simupath}/${input_file}.restart.${lastRestartStep}.in"
+sed -i {'s/\(read_restart[\t ]*\)\(.*\)/\1 tmp.restart.'"${lastRestartStep}"'/'} ${input_restart_file}
+#--	PUT THE STEPS LEFT TO COMPLETE THE LAST OPERATION
+#--	PUT THE OPERATIONS NOT PERFORMED
+echo "#THERMO_INFO" >> ${input_restart_file}
+echo -e "${gthermo}" >> ${input_restart_file}
+echo -e "#END_THERMO_INFO\n" >> ${input_restart_file}
+echo -e "#OP_\n${ops[$i]}\n#DOP_\n${dump[$i]}\n#ROP_\nrestart ${res[$i]} tmp.restart.*" >> ${input_restart_file}
+echo -e "#THOP_\nthermo ${thermo[$i]}\n#TSOP_\ntimestep ${tstep[$i]}\n#RUNOP_\nrun $(( ${tmprun} - ${lastRestartStep} ))" >> ${input_restart_file}
+echo -e "#UDOP_\n${undump[$i]}\n#UFIX_\n${unfix[$i]}\n\n" >> ${input_restart_file}
+for (( h = (( $i + 1 )); h <= ${ops_N}; h++ ))
+do
+	echo -e "#OP_\n${ops[$h]}\n#DOP_\n${dump[$h]}\n#ROP_\nrestart ${res[$h]} tmp.restart.*" >> ${input_restart_file}
+	echo -e "#THOP_\nthermo ${thermo[$h]}\n#TSOP_\ntimestep ${tstep[$h]}\n#RUNOP_\nrun ${run[$h]}" >> ${input_restart_file}
+	echo -e "#UDOP_\n${undump[$h]}\n#UFIX_\n${unfix[$h]}\n\n" >> ${input_restart_file}
+done
+
+#	WITH SIMULIST FILE:
+#--	FIND THE FIRST SIMULATION AND CHANGE THE INPUT AND OUTPUT
+gawk -v s=${lastRestartStep} -f cmdUpdateRestart simuList > simuList_TMP
 rm startedSimuList
 rm simuList
 mv simuList_TMP simuList
