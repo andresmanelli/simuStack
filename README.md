@@ -72,7 +72,7 @@ Input conventions
 		#UFIX_
 		unfix F1
           
-PLEASE FOLLOW THIS ORDER TO GARANTEE THE PROPER FILE PARSING
+PLEASE FOLLOW THIS ORDER TO GUARANTEE THE PROPER FILE PARSING
 Don't omit any of them. If you don't want to use a command, just add
 a "#" at than line:
 		
