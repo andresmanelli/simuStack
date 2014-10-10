@@ -17,7 +17,7 @@
 #define NO_TEMPLATE		3
 #define NO_INPUT_FILE	4
 #define NO_OUTPUT_FILE	5
-#define UDPATE_DONE		6
+#define UPDATE_DONE		6
 
 using namespace std;
 
@@ -85,10 +85,10 @@ int main(int argc, char** argv){
 		exit(1);
 	} else if( WEXITSTATUS(exitCode) == NO_TEMPLATE ){
 		cout << "No input restart template found! Verify and launch again." << endl;
-		exit(1)
+		exit(1);
 	} else if( WEXITSTATUS(exitCode) == NO_INPUT_FILE ){
 		cout << "No input file found! Verify and launch again." << endl;
-		exit(1)
+		exit(1);
 	} else if( WEXITSTATUS(exitCode) == NO_OUTPUT_FILE ){
 		cout << "No output file found! Verify and launch again." << endl;
 	} else if( 	(WEXITSTATUS(exitCode) == SIMULIST_OK)	|| \
