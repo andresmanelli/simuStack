@@ -18,7 +18,8 @@ echo "PATH: $simupath"
 
 list="$(cd "$simupath" && ls -l tmp.restart.*)"
 lastRestartStep="$(echo "$list" | gawk -f AwkFiles/lastStep)"
-if [ ! $lastRestartStep ]
+
+if [ ! -f "${simupath}/tmp.restart.${lastRestartStep}" ]
 then
 	echo "Started but no restart.. same as if nothing was found"
 	rm startedSimuList
