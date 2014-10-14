@@ -5,28 +5,10 @@ BEGIN{
 	ops_N=0
 	n_ops=1000;
 
-	undump="#UDOP_"
-	n_undump=1000
-	
-	unfix="#UFIX_"
-	n_unfix=1000
-
-	op="(#OP_)"
+	op="(#OP)"
 	n_op=1000
 	
-	restart="#ROP_"
-	n_restart=1000;
-	
-	dump="#DOP_"
-	n_dump=1000
-	
-	thermo="#THOP_"
-	n_thermo=1000
-	
-	timestep="#TSOP_"
-	n_timestep=1000
-	
-	run="run[ ]+([0-9]+)"
+	run="(run)[ ]+([0-9]+)"
 	n_run=1000
 	
 	thermoinfo="#THERMO_INFO"
@@ -37,22 +19,10 @@ BEGIN{
 
 }
 (m=="match_op"||m=="all")&&match($0,op,str){n_op=NR; print str[1]; ops_N++}
-NR==n_op+1&&match($1,"fix",str){print}
+NR==n_op+1&&match($1,"fix"){print}
 NR==n_op+1&&match($1,"(#)",str){print str[1]}
-(m=="match_dump"||m=="all")&&match($0,dump,str){n_dump=NR; print}
-NR==n_dump+1{print}
-(m=="match_restart"||m=="all")&&match($0,restart,str){n_restart=NR; print}
-NR==n_restart+1{print $2}
-(m=="match_thermo"||m=="all")&&match($0,thermo,str){n_thermo=NR; print}
-NR==n_thermo+1{print $2}
-(m=="match_timestep"||m=="all")&&match($0,timestep,str){n_timestep=NR; print}
-NR==n_timestep+1{print $2}
-(m=="match_run"||m=="all")&&match($0,run,str){n_run=NR; print "#RUNOP"; print str[1]}
-#NR==n_run+1{print $2}
-(m=="match_undump"||m=="all")&&match($0,undump,str){n_undump=NR; print}
-NR==n_undump+1{print}
-(m=="match_unfix"||m=="all")&&match($0,unfix,str){n_unfix=NR; print}
-NR==n_unfix+1{print}
+(m=="match_run"||m=="all")&&match($0,run,str){n_run=NR; print str[1]" "str[2]}
+(NR>n_op+1)&& !match($0,run,str){print}
 (m=="match_endthinfo"||m=="all")&&match($0,endthermoinfo,str){n_endthinfo=NR; print}
 (m=="match_thinfo"||m=="all")&&match($0,thermoinfo,str){n_thinfo=NR; print}
 (NR>n_thinfo)&&(NR<n_endthinfo){print; n_th++}
