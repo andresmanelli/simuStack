@@ -66,7 +66,7 @@ Input conventions
 		[...]
           
 If two different code blocks (run command) use the same fix, let the stack
-know this by adding an empty comment line where a fix would be placed. This allows
+know this by adding an empty comment line where a fix should be placed. This allows
 the proper computation of run command's steps left.
 
 		#OP
