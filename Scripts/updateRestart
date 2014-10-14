@@ -142,8 +142,6 @@ done
 #--	PUT THE STEPS LEFT TO COMPLETE THE LAST OPERATION
 sed -i {'1,/\(run[\t ]*\)\(.*\)/s/\(run[\t ]*\)\(.*\)/\1 '"$(( ${tmprun} - ${lastRestartStep} ))"'/'} ${input_restart_file}
 
-exit 0
-
 #	WITH SIMULIST FILE:
 #--	FIND THE FIRST SIMULATION AND CHANGE THE INPUT AND OUTPUT
 gawk -v s=${lastRestartStep} -f AwkFiles/cmdUpdateRestart simuList > simuList_TMP
