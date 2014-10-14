@@ -55,32 +55,21 @@ Input conventions
 		thermo
 		#END_THERMO_INFO
 		
-		#OP_
+		#OP
 		fix F1 etc
-		#DOP_
 		dump ID etc
-		#ROP_
 		restart	10000 etc
-		#THOP_
-		thermo 100
-		#TSOP_
-		timestep	0.002
-		#RUNOP_
-		run 50000
-		#UDOP_
-		undump OUT1
-		#UFIX_
-		unfix F1
+		[...]
+		
+		#OP
+		fix F2 etc
+		[...]
           
-PLEASE FOLLOW THIS ORDER TO GUARANTEE THE PROPER FILE PARSING
-Don't omit any of them. If you don't want to use a command, just add
-a "#" at than line:
-		
-		#THERMO_INFO
-		#
-		#END_THERMO_INFO
-		
-		#OP_
+If two different code blocks (run command) use the same fix, let the stack
+know this by adding an empty comment line where a fix would be placed. This allows
+the proper computation of run command's steps left.
+
+		#OP
 		#
 
 When a stopped simulation is found, this program searches for a file called
