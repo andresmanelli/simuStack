@@ -77,3 +77,12 @@ _input.restart.in_ that is a template with the common information for all
 simulation fixes. Then it adds to this template the pending operations and
 stores the new file in input.restart.STEP.in WITHOUT modifying the template.
 It is necessary to leave a template file for this program to work.
+
+Issues
+=======
+
+If there's a fix that shares a run with another fix, this will cause problems, because 
+for the moment the script looks for a fix and some commands associated to it until the next fix
+(or empty #OP).
+
+If there's a fix that is common to the whole simulation (special case) ADD IT TO THE RESTART TEMPLATE!
