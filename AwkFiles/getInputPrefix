@@ -1,6 +1,6 @@
 BEGIN{
 	pat2=".+ < (.+)[.]in > .+[.]out"
-	pat1=".+ < (.+[.]restart[.][0-9]+)[.]in > .+[.]restart[.][0-9]+[.]out"
+	pat1=".+ < (.+)[.]restart[.][0-9]+[.]in > .+[.]restart[.][0-9]+[.]out"
 }
 (NR==2)&&(match($0,pat1,cmd)){
 	print cmd[1]

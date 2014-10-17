@@ -38,8 +38,11 @@ then
 	exit 3
 fi
 #-- FIND INPUT FILE
+input_prefix="$(gawk -f AwkFiles/getInputPrefix simuList)"
 input_file="$(gawk -f AwkFiles/getInputFile simuList)"
+initial_step="$(gawk -f AwkFiles/getInitialStep simuList)"
 echo "INPUT FILE: $input_file"
+echo "INITIAL STEP: $initial_step"
 #--	VERIFY INPUT FILE
 if [ ! -f "${simupath}/${input_file}.in" ]
 then
@@ -83,28 +86,29 @@ do
 #--	SAVE OSP INDEXES ?
 	opindex[$i]="$(gawk 'NR>'${opindex[$i-1]}'&&match($0,"#OP",str){print NR+1; exit}' ops_tmp)"
 	ops[$i]="$(gawk "NR==${opindex[$i]}{print}" ops_tmp)"
-#	echo "OP: ${ops[$i-1]}"
+	echo "OP: ${ops[$i-1]}"
 	cmdlist[$i-1]="$(gawk "NR>${opindex[$i-1]}&&NR<${opindex[$i]}-1{print}" ops_tmp)"
 	run[$i-1]="$(gawk 'NR>'${opindex[$i-1]}'&&NR<'${opindex[$i]}-1'&&match($0,"run[ ]+([0-9]+)",s){print s[1]}' ops_tmp)"
-#	echo -e "Cmd $i :\n${cmdlist[$i-1]}"
-#	echo "RUN: ${run[$i-1]}"
+	echo -e "Cmd $i :\n${cmdlist[$i-1]}"
+	echo "RUN: ${run[$i-1]}"
 done
-#echo "OP: ${ops[$i-1]}"
+echo "OP: ${ops[$i-1]}"
 opindex[$i]="$(gawk 'match($0,"#N_OPS",str){print NR+1; exit}' ops_tmp)"
 run[$i-1]="$(gawk 'NR>'${opindex[$i-1]}'&&NR<'${opindex[$i]}-1'&&match($0,"run[ ]+([0-9]+)",s){print s[1]}' ops_tmp)"
 cmdlist[$i-1]="$(gawk "NR>${opindex[$i-1]}&&NR<${opindex[$i]}-1{print}" ops_tmp)"
-#echo -e "Cmd $i :\n${cmdlist[$i-1]}"
-#echo "RUN: ${run[$i-1]}"
+echo -e "Cmd $i :\n${cmdlist[$i-1]}"
+echo "RUN: ${run[$i-1]}"
 
 #	WITH THE TMP.RESTART.STEP INFO:
 #--	MATCH THE LAST PARTIAL OPERATION PERFORMED COMPARING WITH RUN STEPS
 laststep="$(cat ${simupath}/${output_file} | awk 'BEGIN{ go=0}go==1&&match($1,"[0-9]+",step){print $1}go==0&&match($1,"Step"){go=1}go==1&&match($1,"Loop"){go=0}' | gawk 'END{print}')"
 echo "LAST SIMU STEP: $laststep"
 
-tmprun=0
+tmprun=${initial_step}
 for (( i = 1; i <= ${ops_N}; i++ ))
 do	
 	tmprun=$(( $tmprun + ${run[$i]} ))
+	echo "$tmprun"
 	
 	if (( $tmprun > ${lastRestartStep} ))
 	then
@@ -117,17 +121,19 @@ do
 				j=$(( j + 1 ))
 			done
 		fi
-		
-		echo "LAST RUN (WHERE RESTART TOOK PLACE): ${ops[$i]}"
-		echo "LAST RUN STEP (WHERE RESTART TOOK PLACE): ${run[$i]}"
+
 		break
 	fi
 done
 
+echo "LAST RUN (WHERE RESTART TOOK PLACE): ${ops[$i]}"
+echo "LAST RUN STEP (WHERE RESTART TOOK PLACE): ${run[$i]}"
+
 #	WITH RESTART.INPUT FILE:
 #--	FIND LINE WITH READ_RESTART AND PUT TMP.RESTART.STEP
-cat "${simupath}/${input_restart_file}" > "${simupath}/${input_file}.restart.${lastRestartStep}.in"
-input_restart_file="${simupath}/${input_file}.restart.${lastRestartStep}.in"
+cat "${simupath}/${input_restart_file}" > "${simupath}/${input_prefix}.restart.${lastRestartStep}.in"
+input_restart_file="${simupath}/${input_prefix}.restart.${lastRestartStep}.in"
+
 sed -i {'s/\(read_restart[\t ]*\)\(.*\)/\1 tmp.restart.'"${lastRestartStep}"'/'} ${input_restart_file}
 #--	PUT THE OPERATIONS NOT PERFORMED
 echo "#THERMO_INFO" >> ${input_restart_file}
