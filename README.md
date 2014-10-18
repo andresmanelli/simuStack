@@ -81,8 +81,4 @@ It is necessary to leave a template file for this program to work.
 Issues
 =======
 
-If there's a fix that shares a run with another fix, this will cause problems, because 
-for the moment the script looks for a fix and some commands associated to it until the next fix
-(or empty #OP).
-
-If there's a fix that is common to the whole simulation (special case) ADD IT TO THE RESTART TEMPLATE!
+Please read and follow the tips in the Issues section.
